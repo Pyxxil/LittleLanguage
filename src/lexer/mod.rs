@@ -21,7 +21,6 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn lex(self) -> Vec<Token> {
-        let tokens = Vec::from(self);
         let mut tokens = Vec::new();
 
         for token in self {
