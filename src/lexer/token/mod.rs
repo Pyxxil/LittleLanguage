@@ -37,8 +37,13 @@ pub enum Token {
     LogicalAnd(Location),
 
     BitwiseOr(Location),
+    BitwiseOrEqual(Location),
     BitwiseAnd(Location),
+    BitwiseAndEqual(Location),
     BitwiseNot(Location),
+    BitwiseNotEqual(Location),
+    BitwiseXor(Location),
+    BitwiseXorEqual(Location),
 
     SubtractEqual(Location),
     AddEqual(Location),
@@ -49,6 +54,8 @@ pub enum Token {
     Addition(Location),
     Multiply(Location),
     Divide(Location),
+
+    Unknown(char, Location),
 }
 
 #[derive(Debug)]

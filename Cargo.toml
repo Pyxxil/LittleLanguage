@@ -12,3 +12,5 @@ path = 'src/main.rs'
 
 [dependencies]
 structopt = "0.3"
+nom = "5"
+nom_locate = "2.0.0"

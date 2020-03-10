@@ -20,14 +20,21 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn lex(self) -> Vec<Token> {
+    pub fn lex(self) -> Result<Vec<Token>, String> {
         let mut tokens = Vec::new();
 
         for token in self {
-            tokens.push(token);
+            match token {
+                Token::Unknown(ch, location) => {
+                    return Err(format!("Unknown token '{}' at {:?}", ch, location));
+                }
+                _ => {
+                    tokens.push(token);
+                }
+            }
         }
 
-        tokens
+        Ok(tokens)
     }
 
     fn peek_char(&mut self) -> Option<&char> {
@@ -163,9 +170,8 @@ impl<'a> Lexer<'a> {
 
     fn next_token(&mut self) -> Option<Token> {
         self.skip_whitespace();
-        let c = self.read_char();
 
-        if let Some(ch) = c {
+        if let Some(ch) = self.read_char() {
             match ch {
                 '=' => {
                     if let Some(&'=') = self.peek_char() {
@@ -305,10 +311,6 @@ impl<'a> Lexer<'a> {
                     self.read_string(),
                 )),
                 '.' => Some(Token::Dot(Location::new(self.column - 1, self.line_number))),
-                '~' => Some(Token::BitwiseNot(Location::new(
-                    self.column - 1,
-                    self.line_number,
-                ))),
                 '!' => {
                     if let Some(&'=') = self.peek_char() {
                         let _ = self.read_char();
@@ -323,29 +325,67 @@ impl<'a> Lexer<'a> {
                         )))
                     }
                 }
-                '&' => {
-                    if let Some(&'&') = self.peek_char() {
-                        let _ = self.read_char();
-                        Some(Token::LogicalAnd(Location::new(
+                '~' => {
+                    if let Some(&'=') = self.peek_char() {
+                        Some(Token::BitwiseNotEqual(Location::new(
                             self.column - 2,
                             self.line_number,
                         )))
                     } else {
-                        Some(Token::BitwiseAnd(Location::new(
+                        Some(Token::BitwiseNot(Location::new(
                             self.column - 1,
                             self.line_number,
                         )))
                     }
                 }
-                '|' => {
-                    if let Some(&'|') = self.peek_char() {
+                '&' => match self.peek_char() {
+                    Some(&'&') => {
+                        let _ = self.read_char();
+                        Some(Token::LogicalAnd(Location::new(
+                            self.column - 2,
+                            self.line_number,
+                        )))
+                    }
+                    Some(&'=') => {
+                        let _ = self.read_char();
+                        Some(Token::BitwiseAndEqual(Location::new(
+                            self.column - 2,
+                            self.line_number,
+                        )))
+                    }
+                    _ => Some(Token::BitwiseAnd(Location::new(
+                        self.column - 1,
+                        self.line_number,
+                    ))),
+                },
+                '|' => match self.peek_char() {
+                    Some(&'|') => {
                         let _ = self.read_char();
                         Some(Token::LogicalOr(Location::new(
                             self.column - 2,
                             self.line_number,
                         )))
+                    }
+                    Some(&'=') => {
+                        let _ = self.read_char();
+                        Some(Token::BitwiseOrEqual(Location::new(
+                            self.column - 2,
+                            self.line_number,
+                        )))
+                    }
+                    _ => Some(Token::BitwiseOr(Location::new(
+                        self.column - 1,
+                        self.line_number,
+                    ))),
+                },
+                '^' => {
+                    if let Some(&'=') = self.peek_char() {
+                        Some(Token::BitwiseXorEqual(Location::new(
+                            self.column - 2,
+                            self.line_number,
+                        )))
                     } else {
-                        Some(Token::BitwiseOr(Location::new(
+                        Some(Token::BitwiseXor(Location::new(
                             self.column - 1,
                             self.line_number,
                         )))
@@ -361,7 +401,10 @@ impl<'a> Lexer<'a> {
                             self.read_number(ch),
                         ))
                     } else {
-                        None
+                        Some(Token::Unknown(
+                            ch,
+                            Location::new(self.column - 1, self.line_number),
+                        ))
                     }
                 }
             }
