@@ -2,6 +2,9 @@ use std::fs::*;
 use std::io::{Error, Read};
 use std::path::PathBuf;
 
+pub mod expression;
+use expression::Expression;
+
 use nom::{
     branch::alt,
     bytes::complete::{escaped, escaped_transform, tag, take_while},
@@ -17,16 +20,6 @@ use nom_locate::LocatedSpan;
 
 type Span<'a> = LocatedSpan<&'a str>;
 type ParseResult<'a, Out> = IResult<Span<'a>, Out, VerboseError<Span<'a>>>;
-
-#[derive(Debug)]
-enum Expression {
-    VariableDeclaration(String),
-    ContainerDeclaration(String, Vec<Expression>),
-    FunctionDeclaration(String, Vec<Expression>, Vec<Expression>),
-    StringLiteral(String),
-    VariableAssignment(String, Vec<Expression>),
-    Identifier(String),
-}
 
 fn parse_string(i: Span) -> ParseResult<String> {
     context(
