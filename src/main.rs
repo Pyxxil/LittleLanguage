@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-mod lexer;
-use lexer::Lexer;
 mod parser;
 use parser::Parser;
 
