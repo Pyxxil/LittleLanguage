@@ -1,4 +1,4 @@
-use std::fs::*;
+use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
@@ -67,8 +67,8 @@ enum StringFragment<'a> {
     EscapedWS,
 }
 
-/// Combine parse_literal, parse_escaped_whitespace, and parse_escaped_char
-/// into a StringFragment.
+/// Combine `parse_literal`, `parse_escaped_whitespace`, and `parse_escaped_char`
+/// into a `StringFragment`.
 fn parse_fragment(input: Span) -> ParseResult<StringFragment> {
     alt((
         // The `map` combinator runs a parser, then applies a function to the output
@@ -105,7 +105,7 @@ fn parse_string(input: Span) -> ParseResult<Expression> {
     // loop won't accidentally match your closing delimiter!
     delimited(
         char('"'),
-        map(build_string, |s| Expression::StringLiteral(s)),
+        map(build_string, Expression::StringLiteral),
         char('"'),
     )(input)
 }
@@ -232,6 +232,7 @@ fn scope(input: Span) -> ParseResult<Vec<Expression>> {
         delimited(
             preceded(space, char('{')),
             many0(alt((
+                map(comment, |s| Expression::Comment(s.to_string())),
                 map(variable_definition, |def| {
                     println!("{:#?}", def);
                     def
@@ -270,7 +271,7 @@ fn function_declaration(input: Span) -> ParseResult<Function> {
 fn comment(input: Span) -> ParseResult<Span> {
     context(
         "Comment",
-        preceded(preceded(space, tag("//")), take_while(|ch| ch != '\n')),
+        preceded(preceded(space, tag("//")), cut(take_while(|ch| ch != '\n'))),
     )(input)
 }
 
